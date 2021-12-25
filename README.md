@@ -1,0 +1,140 @@
+# Urban++
+
+A simple C++ library for fetching words from [Urban Dictionary](https://urbandictionary.com)
+
+## Table of contents
+- [Getting Started](#getting-started)
+    - [How to include](#how-to-include)
+- [Usage](#usage)
+    - [Basic usage](#basic-usage)
+    - [Advanced usage and list of methods](#advanced-usage)
+        - [Initializing objects](#initializing-objects)
+        - [Fetch random words](#fetching-random-words)
+        - [List of getters](#list-of-getters)
+- [Dependencies](#dependencies)
+
+# Getting Started
+
+## How to include
+
+This is a single header library, so just copy `include/urban++.hpp` into your project's directory and you're good.
+
+To include it, of course you'll need to do:
+
+```cpp
+#include "urban++.hpp"
+```
+
+When compiling your program that uses this library, don't forget to add the `-lcurl` option in your compile command to link the curl libraries. See the [dependencies](#dependencies) section for more info.
+
+# Usage
+
+## Basic usage
+
+This library is designed to be simple and easy to use. You only need to set the search term and run the `fetch()` method, the more crude stuff like curl cleanup is handled by the library, so you don't need to care about memory leaks ( ͡° ͜ʖ ͡°)
+
+Quickstart example:
+
+```cpp
+#include <iostream>
+#include "urban++.hpp"
+
+int main() {
+    nm::Urban urban; // Initialize object
+    urban.setSearchTerm("lol"); // Set the search term
+    urban.fetch(); // Fetch results
+
+    // Print the word, top definition, and author of top definition
+    std::cout << "Word: " << urban.getTopWord() << std::endl
+              << "Definition: " << urban.getTopDefinition() << std::endl
+              << "Author: " << urban.getTopAuthor() << std::endl;
+    
+    return 0;
+}
+```
+
+This program prints the top definition of the word "lol" and also prints the username of the author of the top definition. Note the usage of the `fetch()` method, you need to call it every time you set the search term. See also: [advanced usage](#advanced-usage). `#include "urban++.hpp"` will be omitted in further examples.
+
+## Advanced usage
+
+This library can get you all sorts of info about the current word's search results on Urban Dictionary (yes redditors, that includes the upvote/downvote count). A list of available get methods is provided in [list of methods](#list-of-getters).
+
+### Initializing objects
+
+To initialize an object,
+
+```cpp
+nm::Urban objectName;
+```
+
+You can also allocate the object on the heap using `new`, or for avoiding accidental memory leaks, using `std::unique_ptr`:
+
+```cpp
+nm::Urban *objectName = new nm::Urban;
+...
+delete objectName;
+```
+
+```cpp
+#include <memory>
+...
+std::unique_ptr <nm::Urban> objectName (new nm::Urban);
+// No delete required
+```
+
+After initializing the object, you need to set the search term using:
+
+```cpp
+objectName.setSearchTerm(word) // word is either an std::string or a char *
+```
+
+As an example, `objectname.setSearchTerm("lol")` sets the search term to our favourite word, lol.
+
+After setting the search term, the results must be fetched using the `fetch()` method (this is the third time I'm talking about `fetch()` what's wrong with me), so for our good 'ol object `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get methods](#list-of-getters).
+
+### Fetching random words
+
+You can fetch the search results of random words using the `fetchRandom()` method. Note that fetching random words does not require a search term to be already set, but if one is already set, the search term will be left unchanged after `fetchRandom()` has done its job. After running `objectName.fetchRandom()`, you'll use the [getters](#list-of-getters) just like you would after running `fetch()`.
+
+### List of getters
+
+Yay we're talking about the getters now
+
+The format for getters is: get<top/bottom/>\<property>(unsigned int index as argument in case of non-top/bottom getter)
+
+getTop\<property>() returns the specific property (for example definition) of the top result in the vector of definitions for the current word from the list of results in the JSON. Same for the getBottom\<property>(), except that it returns the bottom most result.
+
+get\<property>(unsigned int index) returns the property of the result at index \<index>
+
+The type returned depends on the property, for example it is std::string for getDefinition(index) but it is
+std::uint64_t for getThumbsUb(index). Given below is a list of all the getters excluding the top/bottom getters to give you an idea of the return values of each getter:
+
+- `std::string getDefinition(unsigned int index)` returns the definition of the word at index `index`
+
+- `std::uint64_t getThumbsUp(unsigned int index)` returns the number of likes (upvotes for redditors) for the definition at index `index`
+
+- `std::uint64_t getThumbsDown(unsigned int index)` returns the number of dislikes (downvoves -_-) for the definition at index `index`
+
+- `std::string getPermalink(unsigned int index)` returns the permalink of the definition at index `index`
+
+- `std::vector <std::string> getSoundURLs(unsigned int index)` returns a vector of sound URLs for the word at index `index`
+
+- `std::string getAuthor(unsigned int index)` returns the username of the author of the definition at index `index`
+
+- `std::string getWord(unsigned int index)` returns the word at index `index`, useful in the case of `fetchRandom()` because each index may contain a different word
+
+- `std::uint64_t getDefID(unsigned int index)` returns the ID of the definition at index `index`
+
+- `std::string getWrittenOn(unsigned int index)` returns the date and time at which the definition at index `index` was submitted. This is in the format "YYYY-MM-DDTHH:MM:SS.XXXZ" where YYYY is the year, MM is the month, DD is the day, T is the date-time separator, HH, MM, SS are hours, minutes and seconds respectively, XXX is miliseconds, and Z is the ending separator.
+
+- `std::string getExample(unsigned int index)` returns the example given with the definition at index `index`
+
+# Dependencies
+
+This library depends on:
+
+- The [curl](https://github.com/curl/curl/tree/master/include/curl) library by [Daniel Stenberg](https://github.com/bagder)
+
+- The [JSON for Modern C++](https://github.com/nlohmann/json) library by [Niels Lohmann](https://github.com/nlohmann)
+
+Thank you guys for creating such awesome libraries, very cool
