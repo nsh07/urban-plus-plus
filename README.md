@@ -13,7 +13,7 @@ This README is also the documentation for this library. This is a very simple an
         - [Initializing objects](#initializing-objects)
         - [Fetch random words](#fetching-random-words)
         - [List of getters](#list-of-getters)
-        - [Error handling](#error-handling-and-curl-easy-strerror)
+        - [Error handling](#error-handling-and-curleasystrerror)
 - [Dependencies](#dependencies)
 
 # Getting Started
@@ -93,7 +93,7 @@ objectName.setSearchTerm(word) // word is either an std::string or a char *
 
 As an example, `objectname.setSearchTerm("lol")` sets the search term to our favourite word, lol.
 
-After setting the search term, the results must be fetched using the `fetch()` method (this is the third time I'm talking about `fetch()` what's wrong with me), so for our good 'ol object `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get methods](#list-of-getters). **The return value of both the `fetch()` and [`fetchRandom()`](#fetching-random-words) methods is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html).** Please have a look at the [error handling](#error-handling-and-curl-easy-strerror) section.
+After setting the search term, the results must be fetched using the `fetch()` method (this is the third time I'm talking about `fetch()` what's wrong with me), so for our good 'ol object `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get methods](#list-of-getters). **The return value of both the `fetch()` and [`fetchRandom()`](#fetching-random-words) methods is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html).** Please have a look at the [error handling](#error-handling-and-curl-easy-strerror-) section.
 
 ### Fetching random words
 
