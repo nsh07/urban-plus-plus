@@ -18,6 +18,8 @@ until then :P
 #define URBAN_PLUS_PLUS
 
 #include <cstdint>
+#include <cstdlib>
+#include <iostream>
 #include <regex>
 #include <string>
 #include <vector>
@@ -55,7 +57,8 @@ namespace nm
                 curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30);
             }
             else {
-                throw "Unable to initialize curl.";
+                std::cerr << "Fatal error: Unable to initialize curl object.";
+                exit(1);
             }
         }
         ~Urban()

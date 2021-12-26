@@ -2,6 +2,8 @@
 
 A simple C++ library for fetching words from [Urban Dictionary](https://urbandictionary.com)
 
+This README is also the documentation for this library. This is a very simple and straightforward library so I thought of keeping the documentation in the README for quick and easy access.
+
 ## Table of contents
 - [Getting Started](#getting-started)
     - [How to include](#how-to-include)
@@ -11,6 +13,7 @@ A simple C++ library for fetching words from [Urban Dictionary](https://urbandic
         - [Initializing objects](#initializing-objects)
         - [Fetch random words](#fetching-random-words)
         - [List of getters](#list-of-getters)
+        - [Error handling](#error-handling-and-curl-easy-strerror)
 - [Dependencies](#dependencies)
 
 # Getting Started
@@ -90,7 +93,7 @@ objectName.setSearchTerm(word) // word is either an std::string or a char *
 
 As an example, `objectname.setSearchTerm("lol")` sets the search term to our favourite word, lol.
 
-After setting the search term, the results must be fetched using the `fetch()` method (this is the third time I'm talking about `fetch()` what's wrong with me), so for our good 'ol object `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get methods](#list-of-getters).
+After setting the search term, the results must be fetched using the `fetch()` method (this is the third time I'm talking about `fetch()` what's wrong with me), so for our good 'ol object `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get methods](#list-of-getters). **The return value of both the `fetch()` and [`fetchRandom()`](#fetching-random-words) methods is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html).** Please have a look at the [error handling](#error-handling-and-curl-easy-strerror) section.
 
 ### Fetching random words
 
@@ -128,6 +131,40 @@ std::uint64_t for getThumbsUb(index). Given below is a list of all the getters e
 - `std::string getWrittenOn(unsigned int index)` returns the date and time at which the definition at index `index` was submitted. This is in the format "YYYY-MM-DDTHH:MM:SS.XXXZ" where YYYY is the year, MM is the month, DD is the day, T is the date-time separator, HH, MM, SS are hours, minutes and seconds respectively, XXX is miliseconds, and Z is the ending separator.
 
 - `std::string getExample(unsigned int index)` returns the example given with the definition at index `index`
+
+### Error handling and [curl_easy_strerror()](https://curl.se/libcurl/c/curl_easy_strerror.html)
+
+The return value of both the `fetch()` and `fetchRandom()` methods is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html), which you can utilize to print out any errors occured while fetching the results. An example is given below:
+
+```cpp
+#include <iostream>
+
+#include <curl/curl.h>
+#include "urban++.hpp"
+
+int main() {
+    nm::Urban objectName;
+    objectName.setSearchTerm("lol");
+    CURLcode err_code = objectName.fetch();
+    if (err_code == CURLE_OK) {
+        std::cout << "Word: " << objectName.getTopWord() << std::endl
+                  << "Definition:\n" << objectName.getTopDefinition() << std::endl
+                  << "Author: " << objectName.getTopAuthor() << std::endl;
+    }
+    else {
+        std::cerr << "An error occured when fetching search results: " << curl_easy_strerror(err_code) << std::endl;
+    };
+    return 0;
+}
+```
+
+This program has the following output when the device does not have an internet connection:
+
+```
+An error occured when fetching search results: Couldn't resolve host name
+```
+
+The above program makes use of [`curl_easy_strerror()`](https://curl.se/libcurl/c/curl_easy_strerror.html) to convert the error code from a `CURLcode` object (note that the return value of `objectName.fetch()` is assigned to `err_code`) to a string, which is then printed. This curl function is useful in user-facing programs which need simple error texts instead of technical error codes.
 
 # Dependencies
 
