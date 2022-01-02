@@ -1,6 +1,6 @@
 /*
 
-    Copyright (c) 2021 Nishant Mishra <https://github.com/NMrocks>
+    Copyright (c) 2021, 2022 Nishant Mishra <https://github.com/NMrocks>
 
     This software is released under the MIT License.
     See https://choosealicense.com/licenses/mit/ for more info.
@@ -114,7 +114,7 @@ namespace nm
 
         std::uint64_t getDefID(unsigned int index) { return resultJSON["list"][index]["defid"]; };
         std::uint64_t getTopDefID() { return getDefID(0); };
-        std::uint64_t getBottomDefID(unsigned int index) { return getDefID(sizeOfList - 1); };
+        std::uint64_t getBottomDefID() { return getDefID(sizeOfList - 1); };
 
         std::string getWrittenOn(unsigned int index) { return resultJSON["list"][index]["written_on"]; };
         std::string getTopWrittenOn() { return getWrittenOn(0); };
@@ -143,6 +143,7 @@ namespace nm
         if (res == CURLE_OK) {
             resultJSON = nlohmann::json::parse(searchResult); // Parse JSON result string and save to resultJSON
             sizeOfList = resultJSON["list"].size(); // Set sizeOfList to the length of "list" vector in JSON
+            if (sizeOfList == 0) return CURLE_GOT_NOTHING; // Return CURLE_GOT_NOTHING if the word does not have any search results
             searchResult = ""; // Resets the search result string
         }
         return res;

@@ -14,6 +14,8 @@ This README is also the documentation for this library. This is a very simple an
         - [Fetch random words](#fetching-random-words)
         - [List of getters](#list-of-getters)
         - [Error handling](#error-handling-and-timeout)
+            - [If no result is found](#if-no-result-is-found)
+            - [Timeout](#timeout)
 - [Dependencies](#dependencies)
 
 # Getting Started
@@ -143,16 +145,17 @@ The return value of both the `fetch()` and `fetchRandom()` methods is [`CURLcode
 #include "urban++.hpp"
 
 int main() {
-    nm::Urban objectName;
-    objectName.setSearchTerm("lol");
-    CURLcode err_code = objectName.fetch();
-    if (err_code == CURLE_OK) {
+    nm::Urban objectName; // Initialize object
+    objectName.setSearchTerm("lol"); // Set search term
+    CURLcode err_code = objectName.fetch(); // Get the return value of fetch() to find any errors
+    if (err_code == CURLE_OK) { // If no error occurs
         std::cout << "Word: " << objectName.getTopWord() << std::endl
                   << "Definition:\n" << objectName.getTopDefinition() << std::endl
                   << "Author: " << objectName.getTopAuthor() << std::endl;
     }
-    else {
+    else { // If some error occured
         std::cerr << "An error occured when fetching search results: " << curl_easy_strerror(err_code) << std::endl;
+        return 1;
     };
     return 0;
 }
@@ -166,7 +169,29 @@ An error occured when fetching search results: Couldn't resolve host name
 
 The above program makes use of [`curl_easy_strerror()`](https://curl.se/libcurl/c/curl_easy_strerror.html) to convert the error code from a `CURLcode` object (note that the return value of `objectName.fetch()` is assigned to `err_code`) to a string, which is then printed. This curl function is useful in user-facing programs which need simple error texts instead of technical error codes.
 
-There is also a timeout duration of 30 seconds set by the class, which is pretty much enough IMO since this program only fetches plain text JSON.
+#### If no result is found
+
+If no search results are found, the API URL returns an empty list. This can lead to errors if you try to access definitions from any index. To avoid this, the `fetch()` method returns `CURLE_GOT_NOTHING` if no search results can be found for the current search term. To utilise this, modify your error-catching if/else statements accordingly:
+
+```cpp
+...
+err_code = objectName.fetch();
+
+if (err_code == CURLE_OK) { // Successfully fetched search results
+    ...
+}
+if (err_code == CURLE_GOT_NOTHING) { // No search results for given word
+    std::cerr << "No search results found for the given word." << std::endl;
+}
+else { // Some other error occured
+    std::cerr << "An error occured when fetching search results: " << curl_easy_strerror(err_code) << std::endl;
+};
+...
+```
+
+#### Timeout
+
+There is a timeout duration of 30 seconds set by the class, which is pretty much enough since this program only fetches plain text JSON lists which are never more than a few KBs in size.
 
 # Dependencies
 
