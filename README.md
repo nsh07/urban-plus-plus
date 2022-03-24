@@ -9,7 +9,7 @@ This README is also the documentation for this library. This is a very simple an
     - [How to include](#how-to-include)
 - [Usage](#usage)
     - [Basic usage](#basic-usage)
-    - [Advanced usage and list of methods](#advanced-usage)
+    - [Advanced usage and list of member functions](#advanced-usage)
         - [Initializing objects](#initializing-objects)
         - [Fetch random words](#fetching-random-words)
         - [List of getters](#list-of-getters)
@@ -36,7 +36,7 @@ When compiling your program that uses this library, don't forget to add the `-lc
 
 ## Basic usage
 
-This library is designed to be simple and easy to use. You only need to set the search term and run the `fetch()` method, the more crude stuff like curl cleanup is handled by the library, so you don't need to care about memory leaks ( ͡° ͜ʖ ͡°)
+This library is designed to be simple and easy to use. You only need to set the search term and run the `fetch()` function, the more crude stuff like curl cleanup is handled by the library, so you don't need to care about memory leaks ( ͡° ͜ʖ ͡°)
 
 Quickstart example:
 
@@ -58,11 +58,11 @@ int main() {
 }
 ```
 
-This program prints the top definition of the word "lol" and also prints the username of the author of the top definition. Note the usage of the `fetch()` method, you need to call it every time you set the search term. See also: [advanced usage](#advanced-usage). `#include "urban++.hpp"` will be omitted in further examples.
+This program prints the top definition of the word "lol" and also prints the username of the author of the top definition. Note the usage of the `fetch()` member function, you need to call it every time you set the search term. See also: [advanced usage](#advanced-usage). `#include "urban++.hpp"` will be omitted in further examples.
 
 ## Advanced usage
 
-This library can get you all sorts of info about the current word's search results on Urban Dictionary (yes redditors, that includes the upvote/downvote count). A list of available get methods is provided in [list of methods](#list-of-getters).
+This library can get you all sorts of info about the current word's search results on Urban Dictionary (yes redditors, that includes the upvote/downvote count). A list of available get functions is provided in [list of member functions](#list-of-getters).
 
 ### Initializing objects
 
@@ -95,11 +95,11 @@ objectName.setSearchTerm(word) // word is either an std::string or a char *
 
 As an example, `objectname.setSearchTerm("lol")` sets the search term to our favourite word, lol.
 
-After setting the search term, the results must be fetched using the `fetch()` method (this is the third time I'm talking about `fetch()` what's wrong with me), so for our good 'ol object `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get methods](#list-of-getters). **The return value of both the `fetch()` and [`fetchRandom()`](#fetching-random-words) methods is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html).** Please have a look at the [error handling](#error-handling-and-timeout) section.
+After setting the search term, the results must be fetched using the `fetch()` function (this is the third time I'm talking about `fetch()` what's wrong with me), so for our good 'ol object `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get functions](#list-of-getters). **The return value of both the `fetch()` and [`fetchRandom()`](#fetching-random-words) functions is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html).** Please have a look at the [error handling](#error-handling-and-timeout) section.
 
 ### Fetching random words
 
-You can fetch the search results of random words using the `fetchRandom()` method. Note that fetching random words does not require a search term to be already set, but if one is already set, the search term will be left unchanged after `fetchRandom()` has done its job. After running `objectName.fetchRandom()`, you'll use the [getters](#list-of-getters) just like you would after running `fetch()`.
+You can fetch the search results of random words using the `fetchRandom()` member function. Note that fetching random words does not require a search term to be already set, but if one is already set, the search term will be left unchanged after `fetchRandom()` has done its job. After running `objectName.fetchRandom()`, you'll use the [getters](#list-of-getters) just like you would after running `fetch()`.
 
 ### List of getters
 
@@ -136,7 +136,7 @@ std::uint64_t for getThumbsUb(index). Given below is a list of all the getters e
 
 ### Error handling and timeout
 
-The return value of both the `fetch()` and `fetchRandom()` methods is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html), which you can utilize to print out any errors occured while fetching the results. An example is given below:
+The return value of both the `fetch()` and `fetchRandom()` functions is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html), which you can utilize to print out any errors occured while fetching the results. An example is given below:
 
 ```cpp
 #include <iostream>
@@ -171,7 +171,7 @@ The above program makes use of [`curl_easy_strerror()`](https://curl.se/libcurl/
 
 #### If no result is found
 
-If no search results are found, the API URL returns an empty list. This can lead to errors if you try to access definitions from any index. To avoid this, the `fetch()` method returns `CURLE_GOT_NOTHING` if no search results can be found for the current search term. To utilise this, modify your error-catching if/else statements accordingly:
+If no search results are found, the API URL returns an empty list. This can lead to errors if you try to access definitions from any index. To avoid this, the `fetch()` member function returns `CURLE_GOT_NOTHING` if no search results can be found for the current search term. To utilise this, modify your error-catching if/else statements accordingly:
 
 ```cpp
 ...

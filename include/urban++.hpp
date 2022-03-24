@@ -41,7 +41,7 @@ namespace nm
         CURLcode res;
         nlohmann::json resultJSON;
 
-        static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp) // Method to write URL JSON data to std::string
+        static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp) // member function to write URL JSON data to std::string
         {
             ((std::string*)userp)->append((char*)contents, size * nmemb);
             return size * nmemb;
@@ -67,7 +67,7 @@ namespace nm
         }
 
         void setSearchTerm(const std::string term); // Sets the search term
-        void setSearchTerm(const char *term); // Overloaded method for char * type
+        void setSearchTerm(const char *term); // Overloaded member function for char * type
 
         CURLcode fetch(); // Fetch results and return CURLcode for success/any errors
         CURLcode fetchRandom(); // Fetch results for a random word
