@@ -85,44 +85,47 @@ namespace nm
         std::uint64_t for getThumbsUb(index)
         */
 
-        std::string getDefinition(unsigned int index) { return resultJSON["list"][index]["definition"]; };
+        std::string getDefinition(unsigned int index) { return resultJSON["list"][index]["definition"]; }
         std::string getTopDefinition() { return getDefinition(0); }
         std::string getBottomDefinition() { return getDefinition(sizeOfList - 1); }
 
-        std::uint64_t getThumbsUp(unsigned int index) { return resultJSON["list"][index]["thumbs_up"]; };
+        std::uint64_t getThumbsUp(unsigned int index) { return resultJSON["list"][index]["thumbs_up"]; }
         std::uint64_t getTopThumbsUp() { return getThumbsUp(0); }
         std::uint64_t getBottomThumbsUp() { return getThumbsUp(sizeOfList - 1); }
-        std::uint64_t getThumbsDown(unsigned int index) { return resultJSON["list"][index]["thumbs_down"]; };
+        std::uint64_t getThumbsDown(unsigned int index) { return resultJSON["list"][index]["thumbs_down"]; }
         std::uint64_t getTopThumbsDown() { return getThumbsDown(0); }
         std::uint64_t getBottomThumbsDown() { return getThumbsDown(sizeOfList - 1); }
 
-        std::string getPermalink(unsigned int index) { return resultJSON["list"][index]["permalink"]; };
-        std::string getTopPermalink() { return getPermalink(0); };
-        std::string getBottomPermalink() { return getPermalink(sizeOfList - 1); };
+        std::string getPermalink(unsigned int index) { return resultJSON["list"][index]["permalink"]; }
+        std::string getTopPermalink() { return getPermalink(0); }
+        std::string getBottomPermalink() { return getPermalink(sizeOfList - 1); }
 
-        std::vector <std::string> getSoundURLs(unsigned int index) { return resultJSON["list"][index]["sound_urls"]; };
-        std::vector <std::string> getTopSoundURLs() { return getSoundURLs(0); };
-        std::vector <std::string> getBottomSoundURLs() { return getSoundURLs(sizeOfList - 1); };
+        std::vector <std::string> getSoundURLs(unsigned int index) { return resultJSON["list"][index]["sound_urls"]; }
+        std::vector <std::string> getTopSoundURLs() { return getSoundURLs(0); }
+        std::vector <std::string> getBottomSoundURLs() { return getSoundURLs(sizeOfList - 1); }
         
-        std::string getAuthor(unsigned int index) { return resultJSON["list"][index]["author"]; };
-        std::string getTopAuthor() { return getAuthor(0); };
-        std::string getBottomAuthor() { return getAuthor(sizeOfList - 1); };
+        std::string getAuthor(unsigned int index) { return resultJSON["list"][index]["author"]; }
+        std::string getTopAuthor() { return getAuthor(0); }
+        std::string getBottomAuthor() { return getAuthor(sizeOfList - 1); }
 
-        std::string getWord(unsigned int index) { return resultJSON["list"][index]["word"]; };
-        std::string getTopWord() { return getWord(0); };
-        std::string getBottomWord() { return getWord(sizeOfList - 1); };
+        std::string getWord(unsigned int index) { return resultJSON["list"][index]["word"]; }
+        std::string getTopWord() { return getWord(0); }
+        std::string getBottomWord() { return getWord(sizeOfList - 1); }
 
-        std::uint64_t getDefID(unsigned int index) { return resultJSON["list"][index]["defid"]; };
-        std::uint64_t getTopDefID() { return getDefID(0); };
-        std::uint64_t getBottomDefID() { return getDefID(sizeOfList - 1); };
+        std::uint64_t getDefID(unsigned int index) { return resultJSON["list"][index]["defid"]; }
+        std::uint64_t getTopDefID() { return getDefID(0); }
+        std::uint64_t getBottomDefID() { return getDefID(sizeOfList - 1); }
 
-        std::string getWrittenOn(unsigned int index) { return resultJSON["list"][index]["written_on"]; };
-        std::string getTopWrittenOn() { return getWrittenOn(0); };
-        std::string getBottomWrittenOn() { return getWrittenOn(sizeOfList - 1); };
+        std::string getWrittenOn(unsigned int index) { return resultJSON["list"][index]["written_on"]; }
+        std::string getTopWrittenOn() { return getWrittenOn(0); }
+        std::string getBottomWrittenOn() { return getWrittenOn(sizeOfList - 1); }
 
-        std::string getExample(unsigned int index) { return resultJSON["list"][index]["example"]; };
-        std::string getTopExample() { return getExample(0); };
+        std::string getExample(unsigned int index) { return resultJSON["list"][index]["example"]; }
+        std::string getTopExample() { return getExample(0); }
         std::string getBottomExample() { return getExample(sizeOfList - 1); }
+
+        int sizeOfJSON() { return sizeOfList; } // Returns the number of items in the list of definitions in the json
+        nlohmann::json rawJSON() { return resultJSON; } // Returns the raw JSON do the user to extract data from manually
     };
 
     void Urban::setSearchTerm(const std::string term)
