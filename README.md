@@ -13,6 +13,7 @@ This README is also the documentation for this library. This is a very simple an
         - [Initializing objects](#initializing-objects)
         - [Fetch random words](#fetching-random-words)
         - [List of getters](#list-of-getters)
+        - [Raw JSON and number of definitions](#raw-json-and-number-of-definitions)
         - [Error handling](#error-handling-and-timeout)
             - [If no result is found](#if-no-result-is-found)
             - [Timeout](#timeout)
@@ -134,6 +135,28 @@ std::uint64_t for getThumbsUb(index). Given below is a list of all the getters e
 
 - `std::string getExample(unsigned int index)` returns the example given with the definition at index `index`
 
+### Raw JSON and number of definitions
+
+You can also get the raw JSON response using the `rawJSON()` function if you want more 🇺🇸freedom🇺🇸 with the data in the JSON. The return type of `rawJSON()` is `nlohmann::json`. Try playing around with the JSON! You can run:
+
+```sh
+curl https://api.urbandictionary.com/v0/define?term="<your search term here>"
+```
+
+In a terminal or open that URL with your search term in a browser to have a look at the JSON response. Trust me it's interesting.
+
+To get the length of the list of definitions, you can use the `sizeOfJSON()` function which returns an `int` with the number of definitions in the list of definitions.
+
+```cpp
+...
+objectName.setSearchTerm("lol");
+objectName.fetch();
+std::cout << "There are " << objectName.sizeOfJSON() << " definitions available for the word \"lol\"" << std::endl;
+...
+```
+
+The above example prints the number of definitions available for the word "lol".
+
 ### Error handling and timeout
 
 The return value of both the `fetch()` and `fetchRandom()` functions is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html), which you can utilize to print out any errors occured while fetching the results. An example is given below:
@@ -202,3 +225,7 @@ This library depends on:
 - The [JSON for Modern C++](https://github.com/nlohmann/json) library by [Niels Lohmann](https://github.com/nlohmann)
 
 Thank you guys for creating such awesome libraries, very cool
+
+# Contribute to Urban++
+
+Got a feature suggestion? Don't understand something in the documentation and want it to be more clear? Don't hesitate, open an issue, or even better, make a pull request!
