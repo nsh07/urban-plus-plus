@@ -18,9 +18,7 @@ until then :P
 #define URBAN_PLUS_PLUS
 
 #include <cstdint>
-#include <cstdlib>
 #include <iostream>
-#include <regex>
 #include <string>
 #include <vector>
 
@@ -32,7 +30,8 @@ namespace nm
     class Urban
     {
         private:
-        std::string searchTerm, searchResult;
+        std::string searchResult, searchTermBackup;
+        char* searchTerm;
         std::string randomURL = "https://api.urbandictionary.com/v0/random";
         std::string urlPrefix = "https://api.urbandictionary.com/v0/define?term=";
         int sizeOfList;
@@ -130,14 +129,18 @@ namespace nm
 
     void Urban::setSearchTerm(const std::string term)
     {
-        searchTerm = std::regex_replace(term, std::regex(" "), "%20");
+        searchTerm = curl_easy_escape(curl, term.data(), term.size()); // Replaces ASCII characters with their URL encoded strings
+        searchTermBackup = searchTerm;
         curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTerm).data());
+        curl_free(searchTerm);
     }
     
     void Urban::setSearchTerm(const char *term)
     {
-        searchTerm = std::regex_replace(term, std::regex(" "), "%20");
+        searchTerm = curl_easy_escape(curl, term, 0);
+        searchTermBackup = searchTerm;
         curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTerm).data());
+        curl_free(searchTerm);
     }
 
     CURLcode Urban::fetch()
@@ -163,7 +166,7 @@ namespace nm
             searchResult = "";
         }
 
-        curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTerm).data()); // Restores the original search term URL
+        curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTermBackup).data()); // Restores the original search term URL
         return res;
     }
 }
