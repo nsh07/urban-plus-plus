@@ -19,6 +19,7 @@ until then :P
 
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -31,12 +32,12 @@ namespace nm
     {
         private:
         std::string searchResult, searchTermBackup;
-        char* searchTerm;
         std::string randomURL = "https://api.urbandictionary.com/v0/random";
         std::string urlPrefix = "https://api.urbandictionary.com/v0/define?term=";
         int sizeOfList;
 
-        CURL *curl;
+        char* searchTerm;
+        std::unique_ptr<CURL, void(*)(CURL *)>curl;
         CURLcode res;
         nlohmann::json resultJSON;
 
@@ -47,22 +48,17 @@ namespace nm
         }
 
         public:
-        Urban() // Sets all curl options
+        Urban(): curl(curl_easy_init(), curl_easy_cleanup) // Sets all curl options
         {
-            curl = curl_easy_init();
-            if (curl) {
-                curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-                curl_easy_setopt(curl, CURLOPT_WRITEDATA, &searchResult);
-                curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30);
+            if (curl.get()) {
+                curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
+                curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &searchResult);
+                curl_easy_setopt(curl.get(), CURLOPT_TIMEOUT, 30);
             }
             else {
                 std::cerr << "Fatal error: Unable to initialize curl object.";
                 exit(1);
             }
-        }
-        ~Urban()
-        {
-            curl_easy_cleanup(curl);
         }
 
         void setSearchTerm(const std::string term); // Sets the search term
@@ -129,23 +125,23 @@ namespace nm
 
     void Urban::setSearchTerm(const std::string term)
     {
-        searchTerm = curl_easy_escape(curl, term.data(), term.size()); // Replaces ASCII characters with their URL encoded strings
+        searchTerm = curl_easy_escape(curl.get(), term.data(), term.size()); // Replaces ASCII characters with their URL encoded strings
         searchTermBackup = searchTerm;
-        curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTerm).data());
+        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm).data());
         curl_free(searchTerm);
     }
     
     void Urban::setSearchTerm(const char *term)
     {
-        searchTerm = curl_easy_escape(curl, term, 0);
+        searchTerm = curl_easy_escape(curl.get(), term, 0);
         searchTermBackup = searchTerm;
-        curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTerm).data());
+        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm).data());
         curl_free(searchTerm);
     }
 
     CURLcode Urban::fetch()
     {
-        res = curl_easy_perform(curl);
+        res = curl_easy_perform(curl.get());
         if (res == CURLE_OK) {
             resultJSON = nlohmann::json::parse(searchResult); // Parse JSON result string and save to resultJSON
             sizeOfList = resultJSON["list"].size(); // Set sizeOfList to the length of "list" vector in JSON
@@ -157,16 +153,16 @@ namespace nm
 
     CURLcode Urban::fetchRandom()
     {
-        curl_easy_setopt(curl, CURLOPT_URL, randomURL.data()); // Sets the URL to the random URL
+        curl_easy_setopt(curl.get(), CURLOPT_URL, randomURL.data()); // Sets the URL to the random URL
         
-        res = curl_easy_perform(curl);
+        res = curl_easy_perform(curl.get());
         if (res == CURLE_OK) {
             resultJSON = nlohmann::json::parse(searchResult);
             sizeOfList = resultJSON["list"].size();
             searchResult = "";
         }
 
-        curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTermBackup).data()); // Restores the original search term URL
+        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTermBackup).data()); // Restores the original search term URL
         return res;
     }
 }
