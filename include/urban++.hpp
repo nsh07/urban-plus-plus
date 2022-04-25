@@ -26,18 +26,19 @@ until then :P
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
+using easy_escape_t = std::unique_ptr<char, decltype(&curl_free)>;
+
 namespace nm
 {
     class Urban
     {
         private:
         std::string searchResult, searchTermBackup;
-        std::string randomURL = "https://api.urbandictionary.com/v0/random";
-        std::string urlPrefix = "https://api.urbandictionary.com/v0/define?term=";
+        const std::string randomURL, urlPrefix;
         int sizeOfList;
 
-        char* searchTerm;
-        std::unique_ptr<CURL, void(*)(CURL *)>curl;
+        std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curl;
+
         CURLcode res;
         nlohmann::json resultJSON;
 
@@ -48,7 +49,10 @@ namespace nm
         }
 
         public:
-        Urban(): curl(curl_easy_init(), curl_easy_cleanup) // Sets all curl options
+        Urban() // Initializes everything
+        : randomURL("https://api.urbandictionary.com/v0/random")
+        , urlPrefix("https://api.urbandictionary.com/v0/define?term=")
+        , curl(curl_easy_init(), curl_easy_cleanup)
         {
             if (curl.get()) {
                 curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -125,18 +129,16 @@ namespace nm
 
     void Urban::setSearchTerm(const std::string term)
     {
-        searchTerm = curl_easy_escape(curl.get(), term.data(), term.size()); // Replaces ASCII characters with their URL encoded strings
-        searchTermBackup = searchTerm;
-        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm).data());
-        curl_free(searchTerm);
+        easy_escape_t searchTerm(curl_easy_escape(curl.get(), term.data(), term.size()), curl_free); // Replaces ASCII characters with their URL encoded strings
+        searchTermBackup = searchTerm.get();
+        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
     }
     
     void Urban::setSearchTerm(const char *term)
     {
-        searchTerm = curl_easy_escape(curl.get(), term, 0);
-        searchTermBackup = searchTerm;
-        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm).data());
-        curl_free(searchTerm);
+        easy_escape_t searchTerm(curl_easy_escape(curl.get(), term, 0), curl_free);
+        searchTermBackup = searchTerm.get();
+        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
     }
 
     CURLcode Urban::fetch()
