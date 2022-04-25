@@ -65,11 +65,46 @@ namespace nm
             }
         }
 
-        void setSearchTerm(const std::string term); // Sets the search term
-        void setSearchTerm(const char *term); // Overloaded member function for char * type
+        void setSearchTerm(const std::string term) // Sets the search term
+        {
+            easy_escape_t searchTerm(curl_easy_escape(curl.get(), term.data(), term.size()), curl_free); // Replaces ASCII characters with their URL encoded strings
+            searchTermBackup = searchTerm.get();
+            curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
+        }
+        
+        void setSearchTerm(const char *term) // Overloaded member function for char * type
+        {
+            easy_escape_t searchTerm(curl_easy_escape(curl.get(), term, 0), curl_free);
+            searchTermBackup = searchTerm.get();
+            curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
+        }
 
-        CURLcode fetch(); // Fetch results and return CURLcode for success/any errors
-        CURLcode fetchRandom(); // Fetch results for a random word
+        CURLcode fetch() // Fetch results and return CURLcode for success/any errors
+        {
+            res = curl_easy_perform(curl.get());
+            if (res == CURLE_OK) {
+                resultJSON = nlohmann::json::parse(searchResult); // Parse JSON result string and save to resultJSON
+                sizeOfList = resultJSON["list"].size(); // Set sizeOfList to the length of "list" vector in JSON
+                if (sizeOfList == 0) return CURLE_GOT_NOTHING; // Return CURLE_GOT_NOTHING if the word does not have any search results
+                searchResult = ""; // Resets the search result string
+            }
+            return res;
+        }
+        
+        CURLcode fetchRandom() // Fetch results for random words
+        {
+            curl_easy_setopt(curl.get(), CURLOPT_URL, randomURL.data()); // Sets the URL to the random URL
+            
+            res = curl_easy_perform(curl.get());
+            if (res == CURLE_OK) {
+                resultJSON = nlohmann::json::parse(searchResult);
+                sizeOfList = resultJSON["list"].size();
+                searchResult = "";
+            }
+
+            curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTermBackup).data()); // Restores the original search term URL
+            return res;
+        }
 
         /*
         The format for getters is: get<top/bottom/><property>(unsigned int index as argument in case of non-top/bottom getter)
@@ -126,47 +161,6 @@ namespace nm
         int sizeOfJSON() { return sizeOfList; } // Returns the number of items in the list of definitions in the json
         nlohmann::json rawJSON() { return resultJSON; } // Returns the raw JSON do the user to extract data from manually
     };
-
-    void Urban::setSearchTerm(const std::string term)
-    {
-        easy_escape_t searchTerm(curl_easy_escape(curl.get(), term.data(), term.size()), curl_free); // Replaces ASCII characters with their URL encoded strings
-        searchTermBackup = searchTerm.get();
-        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
-    }
-    
-    void Urban::setSearchTerm(const char *term)
-    {
-        easy_escape_t searchTerm(curl_easy_escape(curl.get(), term, 0), curl_free);
-        searchTermBackup = searchTerm.get();
-        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
-    }
-
-    CURLcode Urban::fetch()
-    {
-        res = curl_easy_perform(curl.get());
-        if (res == CURLE_OK) {
-            resultJSON = nlohmann::json::parse(searchResult); // Parse JSON result string and save to resultJSON
-            sizeOfList = resultJSON["list"].size(); // Set sizeOfList to the length of "list" vector in JSON
-            if (sizeOfList == 0) return CURLE_GOT_NOTHING; // Return CURLE_GOT_NOTHING if the word does not have any search results
-            searchResult = ""; // Resets the search result string
-        }
-        return res;
-    }
-
-    CURLcode Urban::fetchRandom()
-    {
-        curl_easy_setopt(curl.get(), CURLOPT_URL, randomURL.data()); // Sets the URL to the random URL
-        
-        res = curl_easy_perform(curl.get());
-        if (res == CURLE_OK) {
-            resultJSON = nlohmann::json::parse(searchResult);
-            sizeOfList = resultJSON["list"].size();
-            searchResult = "";
-        }
-
-        curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTermBackup).data()); // Restores the original search term URL
-        return res;
-    }
 }
 
 #endif
