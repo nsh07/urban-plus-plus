@@ -18,6 +18,7 @@ until then :P
 #define URBAN_PLUS_PLUS
 
 #include <cstdint>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -30,6 +31,28 @@ using easy_escape_t = std::unique_ptr<char, decltype(&curl_free)>;
 
 namespace nm
 {
+    class Initializer
+    {
+        /*
+        Class to globally initialize the libcurl environment. Not copyable since there should only
+        be one instance of this class in a program.
+        The constructor inits the environment and the destructor cleans it up.
+        */
+        public:
+        Initializer()
+        {
+            curl_global_init(CURL_GLOBAL_ALL);
+        }
+        ~Initializer()
+        {
+            curl_global_cleanup();
+        }
+
+        Initializer(const Initializer& that) = delete;
+        Initializer& operator=(const Initializer& that) = delete;
+    };
+
+
     class Urban
     {
         private:
@@ -80,6 +103,8 @@ namespace nm
             2. Copy the other (needed) variables
             3. Set the CURLOPT_WRITEDATA option again so that it points to the string belonging
                to the new object and not the older one
+            4. Set the CURLOPT_URL option so that running fetch() after copying will not result in an error
+               or blank response JSON
             */
             this->searchTermBackup = that.searchTermBackup;
             this->sizeOfList = that.sizeOfList;
@@ -87,6 +112,7 @@ namespace nm
 
             if (curl) {
                 curl_easy_setopt(this->curl, CURLOPT_WRITEDATA, &(this->searchResult)); // Changes the string to which transferred data is stored to the one in the new object
+                curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTermBackup).data());
             }
             else {
                 std::cerr << "Fatal error: Unable to copy object because of inability to duplicate curl handle." << std::endl;
@@ -103,6 +129,7 @@ namespace nm
             this->searchTermBackup = that.searchTermBackup;
             this->sizeOfList = that.sizeOfList;
             this->resultJSON = that.resultJSON;
+            curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTermBackup).data());
             return *this;
         }
 

@@ -10,6 +10,7 @@ This README is also the documentation for this library. This is a very simple an
 - [Usage](#usage)
     - [Basic usage](#basic-usage)
     - [Advanced usage and list of member functions](#advanced-usage)
+        - [Initializing the transfer environment](#initializing-the-transfer-environment)
         - [Initializing objects](#initializing-objects)
         - [Fetch random words](#fetching-random-words)
         - [List of getters](#list-of-getters)
@@ -39,6 +40,8 @@ When compiling your program that uses this library, don't forget to add the `-lc
 
 This library is designed to be simple and easy to use. You only need to set the search term and run the `fetch()` function, the more crude stuff like curl cleanup is handled by the library, so you don't need to care about memory leaks ( ͡° ͜ʖ ͡°)
 
+I and this library don't expect you to have any knowledge about libcurl before you use it (and you don't need to), but it doesn't hurt to have a look at the [libcurl doc](https://curl.se/libcurl/c/).
+
 Quickstart example:
 
 ```cpp
@@ -46,6 +49,7 @@ Quickstart example:
 #include "urban++.hpp"
 
 int main() {
+    static nm::Initializer init; // Initialize transfer environment
     nm::Urban urban; // Initialize object
     urban.setSearchTerm("lol"); // Set the search term
     urban.fetch(); // Fetch results
@@ -59,11 +63,27 @@ int main() {
 }
 ```
 
-This program prints the top definition of the word "lol" and also prints the username of the author of the top definition. Note the usage of the `fetch()` member function, you need to call it every time you set the search term. See also: [advanced usage](#advanced-usage). `#include "urban++.hpp"` will be omitted in further examples.
+This program prints the top definition of the word "lol" and also prints the username of the author of the top definition. Note the usage of the `fetch()` member function, you need to call it every time you set the search term. Also note the unused `init` object (see [Initializing the transfer environment](#initializing-the-transfer-environment)). See also: [advanced usage](#advanced-usage). `#include "urban++.hpp"` will be omitted in further examples.
 
 ## Advanced usage
 
 This library can get you all sorts of info about the current word's search results on Urban Dictionary (yes redditors, that includes the upvote/downvote count). A list of available get functions is provided in [list of member functions](#list-of-getters).
+
+### Initializing the transfer environment
+
+Before you start doing anything in your program, you must create an object of the `Initializer` class (introduced in v1.3.0) in `static` storage. This object will [setup the libcurl transfer environment](https://curl.se/libcurl/c/curl_global_init.html) and will clean up the required memory at the end of the program. **There must be only one object of the Initializer class in your entire program.**
+
+This object is not *required* but it is highly recommended that you use it because relying on the Urban object to automatically setup the environment (via `curl_easy_perform()`) is not considered good practice (in the libcurl documentation) and can affect the stability of your program. It is also not required because of backwards compatibility with versions of this library older than 1.3.0. Also, there is no other use of this object and you should leave it after creating it as is.
+
+Example:
+
+```cpp
+...
+int main() {
+    static nm::Initializer init; // First thing to do
+    // rest of the code
+}
+```
 
 ### Initializing objects
 
@@ -137,13 +157,13 @@ std::uint64_t for getThumbsUb(index). Given below is a list of all the getters e
 
 ### Raw JSON and number of definitions
 
-You can also get the raw JSON response using the `rawJSON()` function if you want more 🇺🇸freedom🇺🇸 with the data in the JSON. The return type of `rawJSON()` is `nlohmann::json`. Try playing around with the JSON! You can run:
+You can also get the raw JSON response using the `rawJSON()` function if you want more 🇺🇸freedom🇺🇸 with the data in the JSON (not recommended, and why would you when you have the sweet and nice getters). The return type of `rawJSON()` is `nlohmann::json`. Try playing around with the JSON! You can run:
 
 ```sh
 curl https://api.urbandictionary.com/v0/define?term="<your search term here>"
 ```
 
-In a terminal or open that URL with your search term in a browser to have a look at the JSON response. Trust me it's interesting.
+In a terminal or open that URL with your search term in a browser to have a look at the JSON response. You can also use [httpie](https://httpie.io/) for a more readable output, but you get the idea.
 
 To get the length of the list of definitions, you can use the `sizeOfJSON()` function which returns an `int` with the number of definitions in the list of definitions.
 
@@ -168,6 +188,7 @@ The return value of both the `fetch()` and `fetchRandom()` functions is [`CURLco
 #include "urban++.hpp"
 
 int main() {
+    static nm::Initializer init; // Initialize transfer environment
     nm::Urban objectName; // Initialize object
     objectName.setSearchTerm("lol"); // Set search term
     CURLcode err_code = objectName.fetch(); // Get the return value of fetch() to find any errors
