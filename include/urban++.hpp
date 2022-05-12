@@ -37,7 +37,7 @@ namespace nm
         const std::string randomURL, urlPrefix;
         int sizeOfList;
 
-        std::unique_ptr<CURL, decltype(&curl_easy_cleanup)> curl;
+        CURL* curl;
 
         CURLcode res;
         nlohmann::json resultJSON;
@@ -49,60 +49,125 @@ namespace nm
         }
 
         public:
-        Urban() // Initializes everything
+        Urban() // Constructor
         : randomURL("https://api.urbandictionary.com/v0/random")
         , urlPrefix("https://api.urbandictionary.com/v0/define?term=")
-        , curl(curl_easy_init(), curl_easy_cleanup)
+        , curl(curl_easy_init())
         {
-            if (curl.get()) {
-                curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, WriteCallback);
-                curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &searchResult);
-                curl_easy_setopt(curl.get(), CURLOPT_TIMEOUT, 30);
+            /*
+            Set all curl options and initialize stuff. Exit with an error if the curl object fails to
+            initialize for some reason (rare)
+            */
+            if (curl) {
+                curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+                curl_easy_setopt(curl, CURLOPT_WRITEDATA, &searchResult);
+                curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30);
             }
             else {
-                std::cerr << "Fatal error: Unable to initialize curl object.";
+                std::cerr << "Fatal error: Unable to initialize curl object." << std::endl;
                 exit(1);
             }
         }
 
+        Urban(const Urban& that) // Copy constructor
+        : randomURL(that.randomURL)
+        , urlPrefix(that.urlPrefix)
+        , curl(curl_easy_duphandle(that.curl))
+        {
+            /*
+            What we need to do here:
+            1. Duplicate the curl handle and initialize the URL variables
+            2. Copy the other (needed) variables
+            3. Set the CURLOPT_WRITEDATA option again so that it points to the string belonging
+               to the new object and not the older one
+            */
+            this->searchTermBackup = that.searchTermBackup;
+            this->sizeOfList = that.sizeOfList;
+            this->resultJSON = that.resultJSON;
+
+            if (curl) {
+                curl_easy_setopt(this->curl, CURLOPT_WRITEDATA, &(this->searchResult)); // Changes the string to which transferred data is stored to the one in the new object
+            }
+            else {
+                std::cerr << "Fatal error: Unable to copy object because of inability to duplicate curl handle." << std::endl;
+                exit(1);
+            }
+        }
+
+        Urban& operator=(const Urban& that) // Copy assignment operator
+        {
+            /* 
+            We don't need to do anything much here. Only copying the backed up search term, size of the list
+            and the result JSON object is enough, since the curl handle is already initialized properly
+            */
+            this->searchTermBackup = that.searchTermBackup;
+            this->sizeOfList = that.sizeOfList;
+            this->resultJSON = that.resultJSON;
+            return *this;
+        }
+
+        ~Urban() // Destructor
+        {
+            /* Only need to cleanup the curl handle, no other resources are handled by the class */
+            curl_easy_cleanup(curl);
+        }
+
+
         void setSearchTerm(const std::string term) // Sets the search term
         {
-            easy_escape_t searchTerm(curl_easy_escape(curl.get(), term.data(), term.size()), curl_free); // Replaces ASCII characters with their URL encoded strings
+            /* URL encode the search term, back it up to another string and set the CURLOPT_URL option */
+            easy_escape_t searchTerm(curl_easy_escape(curl, term.data(), term.size()), curl_free);
             searchTermBackup = searchTerm.get();
-            curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
+            curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
         }
         
         void setSearchTerm(const char *term) // Overloaded member function for char * type
         {
-            easy_escape_t searchTerm(curl_easy_escape(curl.get(), term, 0), curl_free);
+            /* Same as the OG setSearchTerm but with a char* */
+            easy_escape_t searchTerm(curl_easy_escape(curl, term, 0), curl_free);
             searchTermBackup = searchTerm.get();
-            curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
+            curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTerm.get()).data());
         }
 
         CURLcode fetch() // Fetch results and return CURLcode for success/any errors
         {
-            res = curl_easy_perform(curl.get());
+            /*
+            What happens here:
+            1. Perform the transfer
+            2. Check the error code
+              i.  If ok, proceed to 3.
+              ii. If not, return the error code without changing anything
+            3. Parse the recieved JSON response, clear the searchResult string, calculate and set the size of the result
+               list.
+              i.  If result list is empty, return CURLE_GOT_NOTHING
+            */
+            res = curl_easy_perform(curl);
             if (res == CURLE_OK) {
-                resultJSON = nlohmann::json::parse(searchResult); // Parse JSON result string and save to resultJSON
-                sizeOfList = resultJSON["list"].size(); // Set sizeOfList to the length of "list" vector in JSON
-                if (sizeOfList == 0) return CURLE_GOT_NOTHING; // Return CURLE_GOT_NOTHING if the word does not have any search results
-                searchResult = ""; // Resets the search result string
+                resultJSON = nlohmann::json::parse(searchResult);
+                searchResult = "";
+                sizeOfList = resultJSON["list"].size();
+                if (sizeOfList == 0) return CURLE_GOT_NOTHING;
             }
             return res;
         }
         
         CURLcode fetchRandom() // Fetch results for random words
         {
-            curl_easy_setopt(curl.get(), CURLOPT_URL, randomURL.data()); // Sets the URL to the random URL
+            /*
+            Same as the OG fetch(), but restores the original URL from the backed up search term
+            before returning. Also, we do not need to check if the result list is empty since the random
+            URL is guaranteed to return something.
+            */
+            curl_easy_setopt(curl, CURLOPT_URL, randomURL.data());
             
-            res = curl_easy_perform(curl.get());
+            res = curl_easy_perform(curl);
             if (res == CURLE_OK) {
                 resultJSON = nlohmann::json::parse(searchResult);
-                sizeOfList = resultJSON["list"].size();
                 searchResult = "";
+                sizeOfList = resultJSON["list"].size();
             }
 
-            curl_easy_setopt(curl.get(), CURLOPT_URL, (urlPrefix + searchTermBackup).data()); // Restores the original search term URL
+            curl_easy_setopt(curl, CURLOPT_URL, (urlPrefix + searchTermBackup).data());
             return res;
         }
 
