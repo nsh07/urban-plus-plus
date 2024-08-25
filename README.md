@@ -2,7 +2,7 @@
 
 A simple C++ library for fetching words from [Urban Dictionary](https://urbandictionary.com)
 
-This README is also the documentation for this library. This is a very simple and straightforward library so I thought of keeping the documentation in the README for quick and easy access.
+This README is also the documentation for this library.
 
 ## Table of contents
 - [Getting Started](#getting-started)
@@ -24,23 +24,21 @@ This README is also the documentation for this library. This is a very simple an
 
 ## How to include
 
-This is a single header library, so just copy `include/urban++.hpp` into your project's directory and you're good.
+This is a single header library, so you can just copy `include/urban++.hpp` into your project's directory.
 
-To include it, of course you'll need to do:
+To include it the header:
 
 ```cpp
 #include "urban++.hpp"
 ```
 
-When compiling your program that uses this library, don't forget to add the `-lcurl` option in your compile command to link the curl libraries. See the [dependencies](#dependencies) section for more info.
+Add the `-lcurl` option in your compile command to link the required curl libraries. See the [dependencies](#dependencies) section for more info.
 
 # Usage
 
 ## Basic usage
 
-This library is designed to be simple and easy to use. You only need to set the search term and run the `fetch()` function, the more crude stuff like curl cleanup is handled by the library, so you don't need to care about memory leaks ( ͡° ͜ʖ ͡°)
-
-I and this library don't expect you to have any knowledge about libcurl before you use it (and you don't need to), but it doesn't hurt to have a look at the [libcurl doc](https://curl.se/libcurl/c/).
+You only need to set the search term and run the `fetch()` function to fetch the results.
 
 Quickstart example:
 
@@ -51,7 +49,7 @@ Quickstart example:
 int main() {
     static nm::Initializer init; // Initialize transfer environment
     nm::Urban urban; // Initialize object
-    urban.setSearchTerm("lol"); // Set the search term
+    urban.setSearchTerm("hello"); // Set the search term
     urban.fetch(); // Fetch results
 
     // Print the word, top definition, and author of top definition
@@ -63,17 +61,15 @@ int main() {
 }
 ```
 
-This program prints the top definition of the word "lol" and also prints the username of the author of the top definition. Note the usage of the `fetch()` member function, you need to call it every time you set the search term. Also note the unused `init` object (see [Initializing the transfer environment](#initializing-the-transfer-environment)). See also: [advanced usage](#advanced-usage). `#include "urban++.hpp"` will be omitted in further examples.
+This program prints the top definition of the word "hello" and also prints the username of the author of the top definition. Note the usage of the `fetch()` member function, you need to call it every time you set the search term. Also note the unused `init` object (see [Initializing the transfer environment](#initializing-the-transfer-environment)). See also: [advanced usage](#advanced-usage). `#include "urban++.hpp"` will be omitted in further examples.
 
 ## Advanced usage
 
-This library can get you all sorts of info about the current word's search results on Urban Dictionary (yes redditors, that includes the upvote/downvote count). A list of available get functions is provided in [list of member functions](#list-of-getters).
+This library can get you all the info about the current word's search results on Urban Dictionary. A list of available get functions is provided in [list of member functions](#list-of-getters).
 
 ### Initializing the transfer environment
 
-Before you start doing anything in your program, you must create an object of the `Initializer` class (introduced in v1.3.0) in `static` storage. This object will [setup the libcurl transfer environment](https://curl.se/libcurl/c/curl_global_init.html) and will clean up the required memory at the end of the program. **There must be only one object of the Initializer class in your entire program.**
-
-This object is not *required* but it is highly recommended that you use it because relying on the Urban object to automatically setup the environment (via `curl_easy_perform()`) is not considered good practice (in the libcurl documentation) and can affect the stability of your program. It is also not required because of backwards compatibility with versions of this library older than 1.3.0. Also, there is no other use of this object and you should leave it after creating it as is.
+Before you start the search, you must create an object of the `Initializer` class (introduced in v1.3.0) in `static` storage. This object will [setup the libcurl transfer environment](https://curl.se/libcurl/c/curl_global_init.html) and will clean up the required memory at the end of the program. **There must be only one object of the Initializer class in your entire program.**
 
 Example:
 
@@ -93,38 +89,21 @@ To initialize an object,
 nm::Urban objectName;
 ```
 
-You can also allocate the object on the heap using `new`, or for avoiding accidental memory leaks, using `std::unique_ptr`:
-
-```cpp
-nm::Urban *objectName = new nm::Urban;
-...
-delete objectName;
-```
-
-```cpp
-#include <memory>
-...
-std::unique_ptr <nm::Urban> objectName (new nm::Urban);
-// No delete required
-```
-
 After initializing the object, you need to set the search term using:
 
 ```cpp
 objectName.setSearchTerm(word) // word is either an std::string or a char *
 ```
 
-As an example, `objectname.setSearchTerm("lol")` sets the search term to our favourite word, lol.
+As an example, `objectname.setSearchTerm("hello")` sets the search term to hello.
 
-After setting the search term, the results must be fetched using the `fetch()` function (this is the third time I'm talking about `fetch()` what's wrong with me), so for our good 'ol object `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get functions](#list-of-getters). **The return value of both the `fetch()` and [`fetchRandom()`](#fetching-random-words) functions is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html).** Please have a look at the [error handling](#error-handling-and-timeout) section.
+After setting the search term, the results must be fetched using the `fetch()` member function before you can access any results, so for our `objectName` it will be `objectName.fetch()`. Now you can finally access the info available about the search results using the [get functions](#list-of-getters). **The return value of both the `fetch()` and [`fetchRandom()`](#fetching-random-words) functions is [`CURLcode`](https://curl.se/libcurl/c/libcurl-errors.html).** Please have a look at the [error handling](#error-handling-and-timeout) section.
 
 ### Fetching random words
 
 You can fetch the search results of random words using the `fetchRandom()` member function. Note that fetching random words does not require a search term to be already set, but if one is already set, the search term will be left unchanged after `fetchRandom()` has done its job. After running `objectName.fetchRandom()`, you'll use the [getters](#list-of-getters) just like you would after running `fetch()`.
 
 ### List of getters
-
-Yay we're talking about the getters now
 
 The format for getters is: get<top/bottom/>\<property>(unsigned int index as argument in case of non-top/bottom getter)
 
@@ -157,25 +136,20 @@ std::uint64_t for getThumbsUb(index). Given below is a list of all the getters e
 
 ### Raw JSON and number of definitions
 
-You can also get the raw JSON response using the `rawJSON()` function if you want more 🇺🇸freedom🇺🇸 with the data in the JSON (not recommended, and why would you when you have the sweet and nice getters). The return type of `rawJSON()` is `nlohmann::json`. Try playing around with the JSON! You can run:
-
-```sh
-curl https://api.urbandictionary.com/v0/define?term="<your search term here>"
-```
-
-In a terminal or open that URL with your search term in a browser to have a look at the JSON response. You can also use [httpie](https://httpie.io/) for a more readable output, but you get the idea.
+You can also get the raw JSON response using the `rawJSON()` function. The return type of `rawJSON()` is `nlohmann::json`. Using this is completely optional and upto you.
+In a terminal or open that URL with your search term in a browser to have a look at the JSON response.
 
 To get the length of the list of definitions, you can use the `sizeOfJSON()` function which returns an `int` with the number of definitions in the list of definitions.
 
 ```cpp
 ...
-objectName.setSearchTerm("lol");
+objectName.setSearchTerm("hello");
 objectName.fetch();
-std::cout << "There are " << objectName.sizeOfJSON() << " definitions available for the word \"lol\"" << std::endl;
+std::cout << "There are " << objectName.sizeOfJSON() << " definitions available for the word \"hello\"" << std::endl;
 ...
 ```
 
-The above example prints the number of definitions available for the word "lol".
+The above example prints the number of definitions available for the word "hello".
 
 ### Error handling and timeout
 
@@ -190,7 +164,7 @@ The return value of both the `fetch()` and `fetchRandom()` functions is [`CURLco
 int main() {
     static nm::Initializer init; // Initialize transfer environment
     nm::Urban objectName; // Initialize object
-    objectName.setSearchTerm("lol"); // Set search term
+    objectName.setSearchTerm("hello"); // Set search term
     CURLcode err_code = objectName.fetch(); // Get the return value of fetch() to find any errors
     if (err_code == CURLE_OK) { // If no error occurs
         std::cout << "Word: " << objectName.getTopWord() << std::endl
@@ -211,7 +185,7 @@ This program has the following output when the device does not have an internet 
 An error occured when fetching search results: Couldn't resolve host name
 ```
 
-The above program makes use of [`curl_easy_strerror()`](https://curl.se/libcurl/c/curl_easy_strerror.html) to convert the error code from a `CURLcode` object (note that the return value of `objectName.fetch()` is assigned to `err_code`) to a string, which is then printed. This curl function is useful in user-facing programs which need simple error texts instead of technical error codes.
+The above program makes use of [`curl_easy_strerror()`](https://curl.se/libcurl/c/curl_easy_strerror.html) to convert the error code from a `CURLcode` object (note that the return value of `objectName.fetch()` is assigned to `err_code`) to a string, which is then printed.
 
 #### If no result is found
 
@@ -235,7 +209,7 @@ else { // Some other error occured
 
 #### Timeout
 
-There is a timeout duration of 30 seconds set by the class, which is pretty much enough since this program only fetches plain text JSON lists which are never more than a few KBs in size.
+There is a connection timeout duration of 30 seconds set by the class.
 
 # Dependencies
 
@@ -244,8 +218,6 @@ This library depends on:
 - The [curl](https://github.com/curl/curl/tree/master/include/curl) library by [Daniel Stenberg](https://github.com/bagder)
 
 - The [JSON for Modern C++](https://github.com/nlohmann/json) library by [Niels Lohmann](https://github.com/nlohmann)
-
-Thank you guys for creating such awesome libraries, very cool
 
 # Contribute to Urban++
 
