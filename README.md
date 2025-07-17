@@ -1,3 +1,6 @@
+> [!NOTE]
+> I made this library back in 2021 when I was in high school, and I am no longer interested in maintaining it further. Please fork this repo if you wish to continue the development of this project.
+
 # Urban++
 
 A simple C++ library for fetching words from [Urban Dictionary](https://urbandictionary.com)
